@@ -68,7 +68,7 @@ const WisdomFeed = () => {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/posts");
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
       const data = await response.json();
       const shuffledData = shuffleArray(data); // Shuffle the posts
       setPosts((prev) => [...prev, ...shuffledData]);
@@ -109,7 +109,7 @@ const WisdomFeed = () => {
   const handleGetInsight = async (post) => {
     try {
       setLoading(true); // Start loading
-      const response = await fetch("http://localhost:5000/api/insight", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/insight`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post }),

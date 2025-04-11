@@ -19,7 +19,11 @@ const PORT = process.env.PORT || 5000;
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_KEY);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://indic-wisdom.vercel.app', 'http://localhost:5173'], // Add your Vercel URL
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 // Route to handle Gemini API requests
