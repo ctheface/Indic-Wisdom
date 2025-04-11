@@ -22,7 +22,7 @@ A modern web application that brings ancient Indian wisdom from the Bhagavad Git
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/indic-wisdom.git
+git clone https://github.com/ctheface/Indic-Wisdom.git
 cd indic-wisdom
 ```
 
