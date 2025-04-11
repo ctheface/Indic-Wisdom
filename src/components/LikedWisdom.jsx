@@ -24,13 +24,14 @@ const LikedWisdom = () => {
     const updatedLikes = likedPosts.filter((id) => id !== postId);
     setLikedPosts(updatedLikes);
     localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId)); // Remove from UI
   };
 
   return (
-    <div className="container my-4">
-      <h1 className="text-center display-4 mb-4">Liked Wisdom</h1>
+    <div className="container my-5">
+      <h1 className="text-center display-4 mb-5 text-black">Liked Wisdom</h1>
       {posts.length === 0 ? (
-        <p className="text-center">No liked posts yet!</p>
+        <p className="text-center font-lora lead">No liked posts yet!</p>
       ) : (
         posts.map((post) => (
           <WisdomCard

@@ -1,7 +1,112 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
 
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Winky+Rough:ital,wght@0,300..900;1,300..900&display=swap');
+
+.font-lora {
+  font-family: 'Lora', serif;
+}
 
 .font-devanagari {
   font-family: 'Noto Serif Devanagari', serif;
+}
+
+:root {
+  --sky-blue: #87CEEB;
+  --black: #000000;
+  --card-bg: #FFFFFF;
+  --card-border: #87CEEB;
+  --text-muted: #333333;
+}
+
+/* Apply Libre Baskerville for body text */
+body {
+  font-family: 'Libre Baskerville', serif;
+  background-color: var(--sky-blue);
+  color: var(--black);
+  transition: background-color 0.3s ease;
+}
+
+/* Apply Winky Rough for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Winky Rough', serif;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.text-sky-blue {
+  color: var(--sky-blue);
+}
+
+.bg-sky-blue {
+  background-color: var(--sky-blue);
+}
+
+.text-black {
+  color: var(--black);
+}
+
+.bg-black {
+  background-color: var(--black);
+}
+
+/* Update card text for a softer tone */
+.card-custom {
+  font-family: 'Libre Baskerville', serif;
+  background-color: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-custom:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button text styling */
+.btn-custom {
+  font-family: 'Winky Rough', serif;
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: var(--sky-blue);
+  color: var(--black);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+  transform: scale(1.05);
+  background-color: #76c7e3;
+}
+
+.btn-heart {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.btn-heart:hover {
+  transform: scale(1.2);
+}
+
+.navbar {
+  background-color: #808080; /* Grey color */
+  color: #FFFFFF; /* White text for contrast */
+}
+
+.navbar .navbar-brand {
+  color: #FFFFFF; /* Ensure links in the navbar are white */
+}
+
+.navbar .navbar-brand:hover {
+  color: #D3D3D3; /* Light grey on hover */
 }

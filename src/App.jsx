@@ -7,11 +7,11 @@ import LikedWisdom from "./components/LikedWisdom";
 function App() {
   return (
     <Router>
-      <div className="min-vh-100 bg-light">
-        <nav className="navbar navbar-expand-lg navbar-dark bg-primary p-3">
+      <div className="min-vh-100 bg-sky-blue">
+        <nav className="navbar navbar-expand-lg bg-black p-3">
           <div className="container-fluid">
-            <Link to="/" className="navbar-brand me-4">Wisdom Feed</Link>
-            <Link to="/liked" className="navbar-brand">Liked Wisdom</Link>
+            <Link to="/" className="navbar-brand text-sky-blue">Indic Verses</Link>
+            <Link to="/liked" className="navbar-brand text-sky-blue">Liked Wisdom</Link>
           </div>
         </nav>
         <Routes>
@@ -33,14 +33,15 @@ const WisdomFeed = () => {
 
   const loadPosts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("wisdom_posts")
-      .select("*")
-      .order("created_at", { ascending: false})
-      .range((page - 1) * 10, page * 10 - 1);
-    if (error) console.log("Error:", error);
-    else setPosts((prev) => [...prev, ...data]);
-    setLoading(false);
+    try {
+      const response = await fetch("http://localhost:5000/api/posts");
+      const data = await response.json();
+      setPosts((prev) => [...prev, ...data]);
+    } catch (error) {
+      console.error("Error loading posts:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -68,18 +69,44 @@ const WisdomFeed = () => {
     localStorage.setItem("likedPosts", JSON.stringify(updatedLikes));
   };
 
+  const handleGetInsight = async (post) => {
+    try {
+      setLoading(true); // Start loading
+      const response = await fetch("http://localhost:5000/api/insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post }),
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates.length > 0) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        console.log("API Response:", data); // Debug response
+        return "No insight generated. Please try again later.";
+      }
+    } catch (error) {
+      console.error("Error fetching insight:", error);
+      return "Failed to get insight. Please check your network or API key.";
+    } finally {
+      setLoading(false); // End loading
+    }
+  };
+
   return (
-    <div className="container my-4">
-      <h1 className="text-center display-4 mb-4">Wisdom Feed</h1>
+    <div className="container my-5">
+      <h1 className="text-center display-3 mb-5 text-black">Indic Verses</h1>
       {posts.map((post) => (
         <WisdomCard
           key={post.id}
           post={post}
           onLike={handleLike}
           isLiked={likedPosts.includes(post.id)}
+          onGetInsight={handleGetInsight}
+          loading={loading}
         />
       ))}
-      {loading && <p className="text-center">Loading...</p>}
+      {loading && <p className="text-center font-lora lead">Loading...</p>}
     </div>
   );
 };
