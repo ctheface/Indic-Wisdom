@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import WisdomCard from "./components/WisdomCard";
 import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import LikedWisdom from "./components/LikedWisdom";
+import About from "./pages/About"; // Import the About page
 
 function App() {
   return (
     <Router>
-      <div
-        className="min-vh-100 bg-sky-blue" // Always use the blue background
-      >
-        <nav className="navbar navbar-expand-lg bg-black p-3">
+      <div className="min-vh-100 bg-sky-blue"> {/* Blue texture background */}
+        <nav className="navbar navbar-expand-lg bg-black p-3"> {/* Black texture background */}
           <div className="container-fluid">
             <Link to="/" className="navbar-brand text-sky-blue">
               Indic Verses
@@ -31,12 +30,19 @@ function App() {
             <Link to="/liked" className="navbar-brand text-sky-blue">
               Liked Verses
             </Link>
+            <Link to="/about" className="navbar-brand text-sky-blue">
+              About
+            </Link>
           </div>
         </nav>
         <Routes>
           <Route path="/" element={<WisdomFeed />} />
           <Route path="/liked" element={<LikedWisdom />} />
+          <Route path="/about" element={<About />} />
         </Routes>
+        <footer className="bg-black text-center text-light py-3">
+          © {new Date().getFullYear()} Indic Wisdom. All rights reserved.
+        </footer>
       </div>
     </Router>
   );

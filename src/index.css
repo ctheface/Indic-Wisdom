@@ -21,12 +21,28 @@
   --text-muted: #333333;
 }
 
-/* Apply Libre Baskerville for body text */
-body {
+/* Ensure the blue texture is applied consistently */
+body, .bg-sky-blue {
+  background-image: url('/blue-texture.jpg') !important; /* Force blue texture */
+  background-size: cover;
+  background-position: center;
+  background-repeat: repeat; /* Changed to repeat for better coverage */
+  background-attachment: fixed; /* Keep background fixed while scrolling */
+  background-color: var(--sky-blue); /* Fallback color */
   font-family: 'Libre Baskerville', serif;
-  background-color: var(--sky-blue);
   color: var(--black);
-  transition: background-color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  position: relative; /* Ensure proper stacking context */
+  z-index: 0; /* Ensure proper layering */
+}
+
+/* Add this to ensure content doesn't hide background */
+#root {
+  position: relative;
+  z-index: 1;
+  background: transparent;
 }
 
 /* Apply Winky Rough for headings */
@@ -40,27 +56,34 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--sky-blue);
 }
 
-/* Plain blue background */
-.bg-sky-blue {
-  background-color: var(--sky-blue);
+/* Black texture background */
+.bg-black {
+  background-image: url('/black.jpg'); /* Use black texture */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* Image background */
-
+/* White texture background */
+.bg-white {
+  background-image: url('/paper-texture.jpg'); /* Use white texture */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
 .text-black {
   color: var(--black);
 }
 
-.bg-black {
-  background-color: var(--black);
-}
-
-/* Update card text for a softer tone */
+/* Update card styles */
 .card-custom {
   font-family: 'Libre Baskerville', serif;
-  background-color: var(--card-bg);
-  border: 2px solid var(--card-border);
+  background-image: url('/paper-texture.jpg'); /* Add paper texture */
+  background-size: cover; /* Ensure the texture covers the card */
+  background-position: center; /* Center the texture */
+  background-repeat: no-repeat; /* Prevent tiling */
+  border: 2px solid var(--card-border); /* Keep the blue border */
   border-radius: 1rem;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -73,11 +96,12 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Button text styling */
+/* Button styles */
 .btn-custom {
   font-family: 'Winky Rough', serif;
   font-weight: 600;
   font-size: 1rem;
+  background-image: url('/blue-texture.jpg') !important;
   background-color: var(--sky-blue);
   color: var(--black);
   border: none;
@@ -88,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-custom:hover {
   transform: scale(1.05);
-  background-color: #76c7e3;
+  background-color: rgba(135, 206, 235, 0.2); /* Add a subtle blue tint on hover */
 }
 
 .btn-heart {
@@ -102,12 +126,13 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(1.2);
 }
 
+/* Navbar styles */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 1000; /* Ensure it stays above other elements */
-  background-color: #000; /* Black background */
-  color: #fff; /* White text */
+  background-color: transparent; /* Remove solid background */
+  color: #fff;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Optional shadow for better visibility */
 }
 
@@ -117,4 +142,90 @@ h1, h2, h3, h4, h5, h6 {
 
 .navbar .navbar-brand:hover {
   color: #D3D3D3; /* Light grey on hover */
+}
+
+/* Footer styles */
+footer {
+  background-color: var(--black); /* Match the navbar background */
+  color: var(--sky-blue); /* Match the text color */
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+}
+
+/* Style for the ctheface link */
+.about-ctheface-link {
+  color: var(--black); /* Set the link color to black */
+  text-decoration: none; /* Remove underline */
+}
+
+.about-ctheface-link:hover {
+  text-decoration: underline; /* Add underline on hover */
+}
+
+/* Modal header styles */
+.modal-header {
+  padding: 0.5rem 1rem !important;
+  min-height: unset !important;
+  align-items: center;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.modal-header .btn-close {
+  padding: 0.5rem;
+  margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+/* General styles for mobile devices */
+@media (max-width: 768px) {
+  /* Adjust the container padding for smaller screens */
+  .container {
+    padding: 1rem;
+  }
+
+  /* Center-align the navbar brand and reduce padding */
+  .navbar .navbar-brand {
+    text-align: center;
+    font-size: 1.2rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Adjust the navbar layout */
+  .navbar {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Reduce font size for headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-size: 1.5rem;
+  }
+
+  /* Adjust card layout for mobile */
+  .card-custom {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Adjust button size for mobile */
+  .btn-custom {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Adjust text alignment for mobile */
+  .text-center {
+    text-align: center;
+  }
+
+  /* Adjust the spacing for the verse text */
+  .verse-text {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
 }
