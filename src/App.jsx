@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabase";
 import WisdomCard from "./components/WisdomCard";
 import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import LikedWisdom from "./components/LikedWisdom";
@@ -7,11 +6,31 @@ import LikedWisdom from "./components/LikedWisdom";
 function App() {
   return (
     <Router>
-      <div className="min-vh-100 bg-sky-blue">
+      <div
+        className="min-vh-100 bg-sky-blue" // Always use the blue background
+      >
         <nav className="navbar navbar-expand-lg bg-black p-3">
           <div className="container-fluid">
-            <Link to="/" className="navbar-brand text-sky-blue">Indic Verses</Link>
-            <Link to="/liked" className="navbar-brand text-sky-blue">Liked Wisdom</Link>
+            <Link to="/" className="navbar-brand text-sky-blue">
+              Indic Verses
+            </Link>
+            <div className="mx-auto text-light text-center">
+              <p className="mb-0 small">
+                "The Bhagavad Gita is the most systematic statement of spiritual
+                evolution ever produced." -{" "}
+                <a
+                  href="https://en.wikipedia.org/wiki/Aldous_Huxley"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-blue"
+                >
+                  Aldous Huxley
+                </a>
+              </p>
+            </div>
+            <Link to="/liked" className="navbar-brand text-sky-blue">
+              Liked Verses
+            </Link>
           </div>
         </nav>
         <Routes>
@@ -31,12 +50,22 @@ const WisdomFeed = () => {
     JSON.parse(localStorage.getItem("likedPosts") || "[]")
   );
 
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const loadPosts = async () => {
     setLoading(true);
     try {
       const response = await fetch("http://localhost:5000/api/posts");
       const data = await response.json();
-      setPosts((prev) => [...prev, ...data]);
+      const shuffledData = shuffleArray(data); // Shuffle the posts
+      setPosts((prev) => [...prev, ...shuffledData]);
     } catch (error) {
       console.error("Error loading posts:", error);
     } finally {
@@ -45,7 +74,7 @@ const WisdomFeed = () => {
   };
 
   useEffect(() => {
-    loadPosts();
+    loadPosts(); // Load and shuffle posts on page load
   }, [page]);
 
   useEffect(() => {
@@ -54,12 +83,14 @@ const WisdomFeed = () => {
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
         !loading
       ) {
-        setPage((prev) => prev + 1);
+        const shuffledPosts = shuffleArray(posts); // Shuffle the posts again
+        setPosts((prev) => [...prev, ...shuffledPosts]); // Append shuffled posts
       }
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading]);
+  }, [loading, posts]);
 
   const handleLike = (postId) => {
     const updatedLikes = likedPosts.includes(postId)
@@ -95,10 +126,10 @@ const WisdomFeed = () => {
 
   return (
     <div className="container my-5">
-      <h1 className="text-center display-3 mb-5 text-black">Indic Verses</h1>
-      {posts.map((post) => (
+      <h1 className="text-center display-3 mb-5 text-black">ॐ Indic Verses ॐ</h1>
+      {posts.map((post, index) => (
         <WisdomCard
-          key={post.id}
+          key={`${post.id}-${index}`} // Combine post.id and index for uniqueness
           post={post}
           onLike={handleLike}
           isLiked={likedPosts.includes(post.id)}

@@ -29,9 +29,9 @@ const LikedWisdom = () => {
 
   return (
     <div className="container my-5">
-      <h1 className="text-center display-4 mb-5 text-black">Liked Wisdom</h1>
+      <h1 className="text-center display-4 mb-5 text-black">Liked Verses</h1>
       {posts.length === 0 ? (
-        <p className="text-center font-lora lead">No liked posts yet!</p>
+        <p className="text-center font-lora lead">No liked verses yet!</p>
       ) : (
         posts.map((post) => (
           <WisdomCard
