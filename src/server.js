@@ -14,17 +14,13 @@ console.log("Supabase Key:", process.env.VITE_SUPABASE_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
 
 // Initialize Supabase client
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_KEY);
 
 // Middleware
-app.use(cors({
-  origin: ['https://indic-wisdom.vercel.app', 'http://localhost:5173'], // Add your Vercel URL
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
+app.use(cors());
 app.use(bodyParser.json());
 
 // Route to handle Gemini API requests
@@ -81,6 +77,6 @@ app.get("/api/posts", async (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, HOST, () => {
-  console.log(`Server is running on http://${HOST}:${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
