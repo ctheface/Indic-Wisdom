@@ -9,15 +9,8 @@ const About = () => {
         From the Bhagavad Gita to the Upanishads, these texts have inspired countless generations and continue to guide humanity toward a path of self-realization and harmony.
       </p>
       <p className="lead text-center font-lora">
-        The purpose of this website is to provide an easy and fast way to access this timeless knowledge. Built by{" "}
-        <a 
-          href="https://github.com/ctheface" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="about-ctheface-link"
-        >
-          ctheface
-        </a>, 
+        The purpose of this website is to provide an easy and fast way to access this timeless knowledge. Built by ctheface, a passionate developer and seeker of truth,
+        Indic Wisdom is designed to be a user-friendly platform that allows individuals to explore and understand the teachings of ancient Indian texts.
         Indic Wisdom aims to bridge the gap between ancient teachings and modern technology, making these teachings accessible to everyone.
       </p>
     </div>
