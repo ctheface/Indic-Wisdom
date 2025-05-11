@@ -67,30 +67,12 @@ const WisdomFeed = () => {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      console.log('Attempting to fetch from:', `${apiUrl}/api/posts`);
-      
-      const response = await fetch(`${apiUrl}/api/posts`);
-      console.log('Response:', response);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
       const data = await response.json();
-      console.log('Received data:', data);
-      
-      if (!Array.isArray(data)) {
-        console.error('Invalid data format:', data);
-        return;
-      }
-      
-      const shuffledData = shuffleArray(data);
-      setPosts(shuffledData);
-      console.log('Posts set:', shuffledData);
+      const shuffledData = shuffleArray(data); // Shuffle posts once
+      setPosts(shuffledData); // Set posts directly, don't append
     } catch (error) {
-      console.error("Error loading posts:", error.message);
-      setPosts([]); // Set empty array on error
+      console.error("Error loading posts:", error);
     } finally {
       setLoading(false);
     }
@@ -99,21 +81,6 @@ const WisdomFeed = () => {
   useEffect(() => {
     loadPosts(); // Load posts only once when component mounts
   }, []);
-
-  // Removed endless scroll effect:
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     if (
-  //       window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-  //       !loading
-  //     ) {
-  //       const shuffledPosts = shuffleArray(posts);
-  //       setPosts((prev) => [...prev, ...shuffledPosts]);
-  //     }
-  //   };
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, [loading, posts]);
 
   const handleLike = (postId) => {
     const updatedLikes = likedPosts.includes(postId)
@@ -131,6 +98,7 @@ const WisdomFeed = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post }),
       });
+
       const data = await response.json();
       if (data.candidates && data.candidates.length > 0) {
         return data.candidates[0].content.parts[0].text;
@@ -149,10 +117,6 @@ const WisdomFeed = () => {
   return (
     <div className="container my-5">
       <h1 className="text-center display-3 mb-5 text-black">ॐ Indic Verses ॐ</h1>
-      {loading && <p className="text-center font-lora lead">Loading verses...</p>}
-      {!loading && posts.length === 0 && (
-        <p className="text-center font-lora lead">No verses found. Please try again later.</p>
-      )}
       {posts.map((post, index) => (
         <WisdomCard
           key={`${post.id}-${index}`}
@@ -163,6 +127,7 @@ const WisdomFeed = () => {
           loading={loading}
         />
       ))}
+      {loading && <p className="text-center font-lora lead">Loading...</p>}
     </div>
   );
 };
