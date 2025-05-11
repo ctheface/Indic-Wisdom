@@ -50,6 +50,7 @@ function App() {
 
 const WisdomFeed = () => {
   const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState(
     JSON.parse(localStorage.getItem("likedPosts") || "[]")
@@ -69,8 +70,8 @@ const WisdomFeed = () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
       const data = await response.json();
-      const shuffledData = shuffleArray(data); // Shuffle posts once
-      setPosts(shuffledData); // Set posts directly, don't append
+      const shuffledData = shuffleArray(data); // Shuffle the posts
+      setPosts((prev) => [...prev, ...shuffledData]);
     } catch (error) {
       console.error("Error loading posts:", error);
     } finally {
@@ -79,8 +80,23 @@ const WisdomFeed = () => {
   };
 
   useEffect(() => {
-    loadPosts(); // Load posts only once when component mounts
-  }, []);
+    loadPosts(); // Load and shuffle posts on page load
+  }, [page]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+        !loading
+      ) {
+        const shuffledPosts = shuffleArray(posts); // Shuffle the posts again
+        setPosts((prev) => [...prev, ...shuffledPosts]); // Append shuffled posts
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, posts]);
 
   const handleLike = (postId) => {
     const updatedLikes = likedPosts.includes(postId)
@@ -119,7 +135,7 @@ const WisdomFeed = () => {
       <h1 className="text-center display-3 mb-5 text-black">ॐ Indic Verses ॐ</h1>
       {posts.map((post, index) => (
         <WisdomCard
-          key={`${post.id}-${index}`}
+          key={`${post.id}-${index}`} // Combine post.id and index for uniqueness
           post={post}
           onLike={handleLike}
           isLiked={likedPosts.includes(post.id)}
