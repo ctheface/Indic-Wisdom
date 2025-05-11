@@ -67,20 +67,30 @@ const WisdomFeed = () => {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      console.log('API URL:', import.meta.env.VITE_API_URL); // Debug URL
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('Attempting to fetch from:', `${apiUrl}/api/posts`);
+      
+      const response = await fetch(`${apiUrl}/api/posts`);
+      console.log('Response:', response);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
+      console.log('Received data:', data);
+      
       if (!Array.isArray(data)) {
-        console.error('Received invalid data format:', data);
+        console.error('Invalid data format:', data);
         return;
       }
+      
       const shuffledData = shuffleArray(data);
       setPosts(shuffledData);
+      console.log('Posts set:', shuffledData);
     } catch (error) {
-      console.error("Error loading posts:", error);
+      console.error("Error loading posts:", error.message);
+      setPosts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -139,9 +149,13 @@ const WisdomFeed = () => {
   return (
     <div className="container my-5">
       <h1 className="text-center display-3 mb-5 text-black">ॐ Indic Verses ॐ</h1>
+      {loading && <p className="text-center font-lora lead">Loading verses...</p>}
+      {!loading && posts.length === 0 && (
+        <p className="text-center font-lora lead">No verses found. Please try again later.</p>
+      )}
       {posts.map((post, index) => (
         <WisdomCard
-          key={`${post.id}-${index}`} // Combine post.id and index for uniqueness
+          key={`${post.id}-${index}`}
           post={post}
           onLike={handleLike}
           isLiked={likedPosts.includes(post.id)}
@@ -149,7 +163,6 @@ const WisdomFeed = () => {
           loading={loading}
         />
       ))}
-      {loading && <p className="text-center font-lora lead">Loading...</p>}
     </div>
   );
 };
