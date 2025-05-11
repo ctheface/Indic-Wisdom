@@ -50,7 +50,6 @@ function App() {
 
 const WisdomFeed = () => {
   const [posts, setPosts] = useState([]);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState(
     JSON.parse(localStorage.getItem("likedPosts") || "[]")
@@ -71,7 +70,7 @@ const WisdomFeed = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
       const data = await response.json();
       const shuffledData = shuffleArray(data); // Shuffle the posts
-      setPosts((prev) => [...prev, ...shuffledData]);
+      setPosts(shuffledData); // Load posts once on component mount
     } catch (error) {
       console.error("Error loading posts:", error);
     } finally {
@@ -80,23 +79,23 @@ const WisdomFeed = () => {
   };
 
   useEffect(() => {
-    loadPosts(); // Load and shuffle posts on page load
-  }, [page]);
+    loadPosts(); // Load posts only once when component mounts
+  }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-        !loading
-      ) {
-        const shuffledPosts = shuffleArray(posts); // Shuffle the posts again
-        setPosts((prev) => [...prev, ...shuffledPosts]); // Append shuffled posts
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, posts]);
+  // Removed endless scroll effect:
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     if (
+  //       window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+  //       !loading
+  //     ) {
+  //       const shuffledPosts = shuffleArray(posts);
+  //       setPosts((prev) => [...prev, ...shuffledPosts]);
+  //     }
+  //   };
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, [loading, posts]);
 
   const handleLike = (postId) => {
     const updatedLikes = likedPosts.includes(postId)
@@ -114,7 +113,6 @@ const WisdomFeed = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post }),
       });
-
       const data = await response.json();
       if (data.candidates && data.candidates.length > 0) {
         return data.candidates[0].content.parts[0].text;
