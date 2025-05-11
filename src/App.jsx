@@ -67,10 +67,18 @@ const WisdomFeed = () => {
   const loadPosts = async () => {
     setLoading(true);
     try {
+      console.log('API URL:', import.meta.env.VITE_API_URL); // Debug URL
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      const shuffledData = shuffleArray(data); // Shuffle the posts
-      setPosts(shuffledData); // Load posts once on component mount
+      if (!Array.isArray(data)) {
+        console.error('Received invalid data format:', data);
+        return;
+      }
+      const shuffledData = shuffleArray(data);
+      setPosts(shuffledData);
     } catch (error) {
       console.error("Error loading posts:", error);
     } finally {
