@@ -41,7 +41,7 @@ function App() {
           <Route path="/about" element={<About />} />
         </Routes>
         <footer className="bg-black text-center text-light py-3">
-          © {new Date().getFullYear()} Indic Wisdom. All rights reserved.
+          Indic Wisdom. Built with ❤️;
         </footer>
       </div>
     </Router>
