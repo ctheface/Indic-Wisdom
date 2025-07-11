@@ -41,7 +41,7 @@ function App() {
           <Route path="/about" element={<About />} />
         </Routes>
         <footer className="bg-black text-center text-light py-3">
-          Indic Wisdom. Built with ❤️;
+          Indic Wisdom. Built with ❤️
         </footer>
       </div>
     </Router>
