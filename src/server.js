@@ -106,14 +106,49 @@ app.post("/api/insight", async (req, res) => {
   }
 
   try {
+    // First, try to list available models to see what's supported
+    let availableModels = [];
+    try {
+      const listModelsUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`;
+      console.log("Fetching available models from:", listModelsUrl);
+      const modelsResponse = await fetch(listModelsUrl);
+      if (modelsResponse.ok) {
+        const modelsData = await modelsResponse.json();
+        console.log("ListModels response:", JSON.stringify(modelsData, null, 2));
+        availableModels = (modelsData.models || []).map(m => {
+          // Extract model name - could be "models/gemini-pro" or just "gemini-pro"
+          const name = m.name || m;
+          return name.replace(/^models\//, '');
+        }).filter(Boolean);
+        console.log("Available Gemini models:", availableModels);
+      } else {
+        const errorText = await modelsResponse.text();
+        console.warn("ListModels failed:", modelsResponse.status, errorText);
+      }
+    } catch (listError) {
+      console.warn("Could not list models, will try common endpoints:", listError.message);
+    }
+
     // Try different API endpoints in order of preference
+    // Based on common Gemini API model names
     const endpoints = [
-      { version: "v1", model: "gemini-1.5-flash-latest" },
-      { version: "v1beta", model: "gemini-1.5-flash-latest" },
-      { version: "v1", model: "gemini-1.5-flash" },
       { version: "v1beta", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-1.5-pro" },
       { version: "v1beta", model: "gemini-pro" },
+      { version: "v1beta", model: "gemini-1.0-pro" },
+      { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1", model: "gemini-1.5-pro" },
     ];
+
+    // If we got available models, prioritize those
+    if (availableModels.length > 0) {
+      const preferredModels = availableModels.filter(m => 
+        m.includes('flash') || m.includes('pro')
+      );
+      if (preferredModels.length > 0) {
+        endpoints.unshift(...preferredModels.map(model => ({ version: "v1beta", model })));
+      }
+    }
 
     const requestBody = {
       contents: [
