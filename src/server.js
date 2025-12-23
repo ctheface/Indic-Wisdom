@@ -130,8 +130,9 @@ app.post("/api/insight", async (req, res) => {
     }
 
     // Try different API endpoints in order of preference
-    // Based on common Gemini API model names
+    // Prioritize gemini-2.5-flash first since it's confirmed working
     const endpoints = [
+      { version: "v1beta", model: "gemini-2.5-flash" },
       { version: "v1beta", model: "gemini-1.5-flash" },
       { version: "v1beta", model: "gemini-1.5-pro" },
       { version: "v1beta", model: "gemini-pro" },
@@ -174,7 +175,7 @@ Write 2-3 paragraphs that make this ancient wisdom accessible to modern readers.
         },
       ],
       generationConfig: {
-        maxOutputTokens: 1000,
+        maxOutputTokens: 10000,
         temperature: 0.8,
       },
     };
