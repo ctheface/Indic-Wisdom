@@ -155,14 +155,27 @@ app.post("/api/insight", async (req, res) => {
         {
           parts: [
             {
-              text: `Provide a concise insight on this Sanskrit verse and its translation: Sanskrit: ${post.sanskrit}, Translation: ${post.translation}`,
+              text: `You are an expert in Hindu philosophy and Sanskrit literature. Explain this verse from ${post.source || 'ancient Hindu scripture'} in a clear, understandable, and engaging way.
+
+Sanskrit Verse: ${post.sanskrit}
+English Translation: ${post.translation}
+Context: ${post.explanation || 'This verse contains profound wisdom'}
+
+Please provide a thoughtful explanation that:
+1. Breaks down the meaning in simple, modern language
+2. Explains why this teaching is relevant and valuable today
+3. Helps readers understand the deeper spiritual or philosophical insight
+4. Uses examples or analogies if helpful
+5. Is warm, accessible, and inspiring
+
+Write 2-3 paragraphs that make this ancient wisdom accessible to modern readers.`,
             },
           ],
         },
       ],
       generationConfig: {
-        maxOutputTokens: 150,
-        temperature: 0.7,
+        maxOutputTokens: 1000,
+        temperature: 0.8,
       },
     };
 
