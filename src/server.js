@@ -114,7 +114,32 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Indic Wisdom Backend API",
+    endpoints: {
+      health: "/health",
+      posts: "/api/posts",
+      insight: "/api/insight (POST)"
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler for undefined routes
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: "Route not found",
+    path: req.path,
+    method: req.method,
+    availableEndpoints: ["/health", "/api/posts", "/api/insight"]
+  });
+});
+
 // Start the server
 const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`API endpoints available at: http://localhost:${PORT}/api/*`);
 });

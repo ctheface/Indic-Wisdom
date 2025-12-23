@@ -145,29 +145,38 @@ const WisdomFeed = () => {
     setLoadingInsight(post.id); // Set loading for this specific card
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
-      const response = await fetch(`${apiUrl}/api/insight`, {
+      const endpoint = `${apiUrl}/api/insight`;
+      
+      console.log("Fetching insight from:", endpoint);
+      
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}: ${response.statusText}` }));
+        console.error("API Error Response:", errorData);
+        throw new Error(`HTTP error! status: ${response.status}. ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("API Response:", data);
+      
       if (data.candidates && data.candidates.length > 0) {
         return data.candidates[0].content.parts[0].text;
       } else if (data.error) {
         console.error("API Error:", data.error);
         return `Error: ${data.error}. Please try again later.`;
       } else {
-        console.log("API Response:", data);
+        console.log("Unexpected API Response format:", data);
         return "No insight generated. Please try again later.";
       }
     } catch (error) {
       console.error("Error fetching insight:", error);
-      return `Failed to get insight: ${error.message}. Please check your network or API configuration.`;
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
+      return `Failed to get insight: ${error.message}. Backend URL: ${apiUrl}/api/insight. Please check your network or API configuration.`;
     } finally {
       setLoadingInsight(null); // Clear loading state
     }
