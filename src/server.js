@@ -106,9 +106,9 @@ app.post("/api/insight", async (req, res) => {
   }
 
   try {
-    // Use gemini-1.5-flash directly
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
-    
+    // Use gemini-2.5-flash directly
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+
     const requestBody = {
       contents: [
         {
@@ -128,7 +128,7 @@ Provide a straightforward explanation that:
 - Avoids flowery language or excessive formality - be direct and clear
 - Do NOT use markdown formatting (no **, no *, no #, etc.) - write plain text only
 
-Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not poetic language. Use plain text only - no formatting symbols.`,
+Write 1 concise paragraph. Focus on clarity and practical understanding, not poetic language. Use plain text only - no formatting symbols.`,
             },
           ],
         },
@@ -148,14 +148,14 @@ Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not 
     if (!response.ok) {
       const errorData = await response.text();
       console.error("Gemini API error:", response.status, errorData);
-      return res.status(response.status).json({ 
+      return res.status(response.status).json({
         error: "AI service is currently unavailable. Please try again later.",
-        details: errorData 
+        details: errorData
       });
     }
 
     const data = await response.json();
-    
+
     // Strip markdown formatting from the response text
     if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
       let text = data.candidates[0].content.parts[0].text;
@@ -170,10 +170,10 @@ Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not 
       // Remove markdown code blocks
       text = text.replace(/```[\s\S]*?```/g, '');
       text = text.replace(/`([^`]+)`/g, '$1');
-      
+
       data.candidates[0].content.parts[0].text = text;
     }
-    
+
     res.json(data);
   } catch (error) {
     console.error("Error fetching insight:", error);
@@ -229,8 +229,8 @@ app.get("/api/posts", async (req, res) => {
       return res.json(csvData);
     }
 
-    return res.status(500).json({ 
-      error: "Database connection not configured. Neither Supabase nor CSV file is available." 
+    return res.status(500).json({
+      error: "Database connection not configured. Neither Supabase nor CSV file is available."
     });
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -245,7 +245,7 @@ app.get("/health", (req, res) => {
 
 // Root endpoint
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "Indic Wisdom Backend API",
     dataSource: USE_CSV ? "CSV" : "Supabase",
     endpoints: {
@@ -259,7 +259,7 @@ app.get("/", (req, res) => {
 
 // 404 handler for undefined routes
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: "Route not found",
     path: req.path,
     method: req.method,
