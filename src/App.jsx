@@ -158,7 +158,8 @@ const WisdomFeed = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}: ${response.statusText}` }));
         console.error("API Error Response:", errorData);
-        throw new Error(`HTTP error! status: ${response.status}. ${errorData.error || response.statusText}`);
+        // Return user-friendly message instead of throwing
+        return "AI insight is not available at the moment. Please try again later.";
       }
 
       const data = await response.json();
@@ -168,15 +169,16 @@ const WisdomFeed = () => {
         return data.candidates[0].content.parts[0].text;
       } else if (data.error) {
         console.error("API Error:", data.error);
-        return `Error: ${data.error}. Please try again later.`;
+        return "AI insight is not available at the moment. Please try again later.";
       } else {
         console.log("Unexpected API Response format:", data);
-        return "No insight generated. Please try again later.";
+        return "AI insight is not available at the moment. Please try again later.";
       }
     } catch (error) {
       console.error("Error fetching insight:", error);
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
-      return `Failed to get insight: ${error.message}. Backend URL: ${apiUrl}/api/insight. Please check your network or API configuration.`;
+      // Log technical details to console for debugging, but show user-friendly message
+      console.error("Technical error details:", error.message);
+      return "AI insight is not available at the moment. Please try again later.";
     } finally {
       setLoadingInsight(null); // Clear loading state
     }
