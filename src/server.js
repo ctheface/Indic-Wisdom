@@ -134,7 +134,7 @@ Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not 
         },
       ],
       generationConfig: {
-        maxOutputTokens: 2500,
+        maxOutputTokens: 1500,
         temperature: 0.8,
       },
     };
