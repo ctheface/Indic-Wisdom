@@ -168,8 +168,9 @@ Provide a straightforward explanation that:
 - Shows how this teaching applies to everyday life
 - Uses concrete examples when helpful
 - Avoids flowery language or excessive formality - be direct and clear
+- Do NOT use markdown formatting (no **, no *, no #, etc.) - write plain text only
 
-Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not poetic language.`,
+Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not poetic language. Use plain text only - no formatting symbols.`,
             },
           ],
         },
@@ -195,6 +196,25 @@ Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not 
         if (response.ok) {
           const data = await response.json();
           console.log(`Successfully used: ${endpoint.version}/${endpoint.model}`);
+          
+          // Strip markdown formatting from the response text
+          if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
+            let text = data.candidates[0].content.parts[0].text;
+            // Remove markdown bold (**text** or __text__)
+            text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+            text = text.replace(/__(.*?)__/g, '$1');
+            // Remove markdown italic (*text* or _text_)
+            text = text.replace(/\*(.*?)\*/g, '$1');
+            text = text.replace(/_(.*?)_/g, '$1');
+            // Remove markdown headers (# Header)
+            text = text.replace(/^#{1,6}\s+/gm, '');
+            // Remove markdown code blocks
+            text = text.replace(/```[\s\S]*?```/g, '');
+            text = text.replace(/`([^`]+)`/g, '$1');
+            
+            data.candidates[0].content.parts[0].text = text;
+          }
+          
           return res.json(data);
         } else {
           const errorData = await response.text();
