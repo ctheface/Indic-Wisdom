@@ -106,40 +106,66 @@ app.post("/api/insight", async (req, res) => {
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
+    // Try different API endpoints in order of preference
+    const endpoints = [
+      { version: "v1", model: "gemini-1.5-flash-latest" },
+      { version: "v1beta", model: "gemini-1.5-flash-latest" },
+      { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-pro" },
+    ];
+
+    const requestBody = {
+      contents: [
+        {
+          parts: [
             {
-              parts: [
-                {
-                  text: `Provide a concise insight on this Sanskrit verse and its translation: Sanskrit: ${post.sanskrit}, Translation: ${post.translation}`,
-                },
-              ],
+              text: `Provide a concise insight on this Sanskrit verse and its translation: Sanskrit: ${post.sanskrit}, Translation: ${post.translation}`,
             },
           ],
-          generationConfig: {
-            maxOutputTokens: 150,
-            temperature: 0.7,
-          },
-        }),
-      }
-    );
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 150,
+        temperature: 0.7,
+      },
+    };
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Gemini API error:", response.status, errorData);
-      return res.status(response.status).json({ 
-        error: `AI service error: ${response.statusText}`,
-        details: errorData 
-      });
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/${endpoint.version}/models/${endpoint.model}:generateContent?key=${geminiApiKey}`;
+        console.log(`Trying Gemini API: ${endpoint.version}/${endpoint.model}`);
+        
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Successfully used: ${endpoint.version}/${endpoint.model}`);
+          return res.json(data);
+        } else {
+          const errorData = await response.text();
+          console.warn(`Failed with ${endpoint.version}/${endpoint.model}:`, response.status, errorData);
+          lastError = { status: response.status, data: errorData };
+          // Continue to next endpoint
+        }
+      } catch (fetchError) {
+        console.warn(`Error with ${endpoint.version}/${endpoint.model}:`, fetchError.message);
+        lastError = { status: 500, data: fetchError.message };
+        // Continue to next endpoint
+      }
     }
 
-    const data = await response.json();
-    res.json(data);
+    // All endpoints failed
+    console.error("All Gemini API endpoints failed. Last error:", lastError);
+    return res.status(lastError?.status || 500).json({ 
+      error: "AI service is currently unavailable. Please try again later.",
+      details: lastError?.data 
+    });
   } catch (error) {
     console.error("Error fetching insight:", error);
     res.status(500).json({ error: `Failed to fetch insight: ${error.message}` });
