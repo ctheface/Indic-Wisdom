@@ -4,6 +4,10 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { parse } from "csv-parse/sync";
 
 // Load environment variables
 dotenv.config();
@@ -11,16 +15,77 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Configuration: Toggle between Supabase and CSV
+// Set USE_CSV=true to use CSV file, false or unset to use Supabase
+const USE_CSV = process.env.USE_CSV === "true" || process.env.USE_CSV === "1";
+
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path to CSV file (in root directory, one level up from src/)
+const CSV_FILE_PATH = path.join(__dirname, "..", "wisdom_posts_rows.csv");
+
+// Cache for CSV data
+let csvDataCache = null;
+
 // Initialize Supabase client with proper error handling
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Error: Supabase credentials are missing!");
-  console.error("Please set VITE_SUPABASE_URL and VITE_SUPABASE_KEY environment variables");
+let supabase = null;
+if (!USE_CSV) {
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Warning: Supabase credentials are missing!");
+    console.warn("Please set VITE_SUPABASE_URL and VITE_SUPABASE_KEY environment variables");
+    console.warn("Falling back to CSV mode. Set USE_CSV=true to explicitly use CSV.");
+  } else {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Function to load and parse CSV data
+const loadCSVData = () => {
+  try {
+    if (csvDataCache) {
+      return csvDataCache;
+    }
+
+    if (!fs.existsSync(CSV_FILE_PATH)) {
+      console.error(`Error: CSV file not found at ${CSV_FILE_PATH}`);
+      return null;
+    }
+
+    const fileContent = fs.readFileSync(CSV_FILE_PATH, "utf-8");
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+
+    // Sort by created_at descending (most recent first)
+    records.sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB - dateA;
+    });
+
+    csvDataCache = records;
+    console.log(`Loaded ${records.length} wisdom posts from CSV`);
+    return records;
+  } catch (error) {
+    console.error("Error loading CSV data:", error);
+    return null;
+  }
+};
+
+// Log current data source on startup
+if (USE_CSV) {
+  console.log("📄 Using CSV file as data source (USE_CSV=true)");
+  loadCSVData(); // Pre-load CSV data
+} else {
+  console.log("🗄️  Using Supabase as data source (USE_CSV=false or unset)");
+}
 
 // Middleware
 app.use(cors());
@@ -84,25 +149,54 @@ app.post("/api/insight", async (req, res) => {
 // Route to fetch posts
 app.get("/api/posts", async (req, res) => {
   try {
-    if (!supabaseUrl || !supabaseKey) {
-      return res.status(500).json({ error: "Database connection not configured" });
+    // Use CSV if explicitly enabled
+    if (USE_CSV) {
+      const data = loadCSVData();
+      if (!data || data.length === 0) {
+        return res.status(404).json({ error: "No posts found in CSV file" });
+      }
+      return res.json(data);
     }
 
-    const { data, error } = await supabase
-      .from("wisdom_posts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // Try Supabase first
+    if (supabase && supabaseUrl && supabaseKey) {
+      try {
+        const { data, error } = await supabase
+          .from("wisdom_posts")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Supabase error:", error);
-      throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
+
+        if (!data) {
+          return res.status(404).json({ error: "No posts found" });
+        }
+
+        return res.json(data);
+      } catch (supabaseError) {
+        console.error("Supabase request failed:", supabaseError);
+        // Fallback to CSV if Supabase fails
+        console.log("Falling back to CSV file...");
+        const csvData = loadCSVData();
+        if (csvData && csvData.length > 0) {
+          return res.json(csvData);
+        }
+        throw supabaseError;
+      }
     }
 
-    if (!data) {
-      return res.status(404).json({ error: "No posts found" });
+    // If Supabase is not configured, try CSV as fallback
+    const csvData = loadCSVData();
+    if (csvData && csvData.length > 0) {
+      return res.json(csvData);
     }
 
-    res.json(data);
+    return res.status(500).json({ 
+      error: "Database connection not configured. Neither Supabase nor CSV file is available." 
+    });
   } catch (error) {
     console.error("Error fetching posts:", error);
     res.status(500).json({ error: `Failed to fetch posts: ${error.message}` });
@@ -118,6 +212,7 @@ app.get("/health", (req, res) => {
 app.get("/", (req, res) => {
   res.json({ 
     message: "Indic Wisdom Backend API",
+    dataSource: USE_CSV ? "CSV" : "Supabase",
     endpoints: {
       health: "/health",
       posts: "/api/posts",
