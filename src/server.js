@@ -106,51 +106,9 @@ app.post("/api/insight", async (req, res) => {
   }
 
   try {
-    // First, try to list available models to see what's supported
-    let availableModels = [];
-    try {
-      const listModelsUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`;
-      console.log("Fetching available models from:", listModelsUrl);
-      const modelsResponse = await fetch(listModelsUrl);
-      if (modelsResponse.ok) {
-        const modelsData = await modelsResponse.json();
-        console.log("ListModels response:", JSON.stringify(modelsData, null, 2));
-        availableModels = (modelsData.models || []).map(m => {
-          // Extract model name - could be "models/gemini-pro" or just "gemini-pro"
-          const name = m.name || m;
-          return name.replace(/^models\//, '');
-        }).filter(Boolean);
-        console.log("Available Gemini models:", availableModels);
-      } else {
-        const errorText = await modelsResponse.text();
-        console.warn("ListModels failed:", modelsResponse.status, errorText);
-      }
-    } catch (listError) {
-      console.warn("Could not list models, will try common endpoints:", listError.message);
-    }
-
-    // Try different API endpoints in order of preference
-    // Prioritize gemini-2.5-flash first since it's confirmed working
-    const endpoints = [
-      { version: "v1beta", model: "gemini-2.5-flash" },
-      { version: "v1beta", model: "gemini-1.5-flash" },
-      { version: "v1beta", model: "gemini-1.5-pro" },
-      { version: "v1beta", model: "gemini-pro" },
-      { version: "v1beta", model: "gemini-1.0-pro" },
-      { version: "v1", model: "gemini-1.5-flash" },
-      { version: "v1", model: "gemini-1.5-pro" },
-    ];
-
-    // If we got available models, prioritize those
-    if (availableModels.length > 0) {
-      const preferredModels = availableModels.filter(m => 
-        m.includes('flash') || m.includes('pro')
-      );
-      if (preferredModels.length > 0) {
-        endpoints.unshift(...preferredModels.map(model => ({ version: "v1beta", model })));
-      }
-    }
-
+    // Use gemini-2.5-flash directly
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    
     const requestBody = {
       contents: [
         {
@@ -181,60 +139,42 @@ Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not 
       },
     };
 
-    let lastError = null;
-    for (const endpoint of endpoints) {
-      try {
-        const apiUrl = `https://generativelanguage.googleapis.com/${endpoint.version}/models/${endpoint.model}:generateContent?key=${geminiApiKey}`;
-        console.log(`Trying Gemini API: ${endpoint.version}/${endpoint.model}`);
-        
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Successfully used: ${endpoint.version}/${endpoint.model}`);
-          
-          // Strip markdown formatting from the response text
-          if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
-            let text = data.candidates[0].content.parts[0].text;
-            // Remove markdown bold (**text** or __text__)
-            text = text.replace(/\*\*(.*?)\*\*/g, '$1');
-            text = text.replace(/__(.*?)__/g, '$1');
-            // Remove markdown italic (*text* or _text_)
-            text = text.replace(/\*(.*?)\*/g, '$1');
-            text = text.replace(/_(.*?)_/g, '$1');
-            // Remove markdown headers (# Header)
-            text = text.replace(/^#{1,6}\s+/gm, '');
-            // Remove markdown code blocks
-            text = text.replace(/```[\s\S]*?```/g, '');
-            text = text.replace(/`([^`]+)`/g, '$1');
-            
-            data.candidates[0].content.parts[0].text = text;
-          }
-          
-          return res.json(data);
-        } else {
-          const errorData = await response.text();
-          console.warn(`Failed with ${endpoint.version}/${endpoint.model}:`, response.status, errorData);
-          lastError = { status: response.status, data: errorData };
-          // Continue to next endpoint
-        }
-      } catch (fetchError) {
-        console.warn(`Error with ${endpoint.version}/${endpoint.model}:`, fetchError.message);
-        lastError = { status: 500, data: fetchError.message };
-        // Continue to next endpoint
-      }
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Gemini API error:", response.status, errorData);
+      return res.status(response.status).json({ 
+        error: "AI service is currently unavailable. Please try again later.",
+        details: errorData 
+      });
     }
 
-    // All endpoints failed
-    console.error("All Gemini API endpoints failed. Last error:", lastError);
-    return res.status(lastError?.status || 500).json({ 
-      error: "AI service is currently unavailable. Please try again later.",
-      details: lastError?.data 
-    });
+    const data = await response.json();
+    
+    // Strip markdown formatting from the response text
+    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
+      let text = data.candidates[0].content.parts[0].text;
+      // Remove markdown bold (**text** or __text__)
+      text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+      text = text.replace(/__(.*?)__/g, '$1');
+      // Remove markdown italic (*text* or _text_)
+      text = text.replace(/\*(.*?)\*/g, '$1');
+      text = text.replace(/_(.*?)_/g, '$1');
+      // Remove markdown headers (# Header)
+      text = text.replace(/^#{1,6}\s+/gm, '');
+      // Remove markdown code blocks
+      text = text.replace(/```[\s\S]*?```/g, '');
+      text = text.replace(/`([^`]+)`/g, '$1');
+      
+      data.candidates[0].content.parts[0].text = text;
+    }
+    
+    res.json(data);
   } catch (error) {
     console.error("Error fetching insight:", error);
     res.status(500).json({ error: `Failed to fetch insight: ${error.message}` });
