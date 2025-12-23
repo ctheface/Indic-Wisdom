@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path to CSV file (in root directory, one level up from src/)
-const CSV_FILE_PATH = path.join(__dirname, "..", "wisdom_posts_rows.csv");
+const CSV_FILE_PATH = path.join(__dirname, "..", "wisdom_posts_rows_fixed.csv");
 
 // Cache for CSV data
 let csvDataCache = null;
@@ -53,7 +53,7 @@ const loadCSVData = () => {
 
     if (!fs.existsSync(CSV_FILE_PATH)) {
       console.error(`Error: CSV file not found at ${CSV_FILE_PATH}`);
-      return null;
+      return [];
     }
 
     const fileContent = fs.readFileSync(CSV_FILE_PATH, "utf-8");
@@ -75,7 +75,7 @@ const loadCSVData = () => {
     return records;
   } catch (error) {
     console.error("Error loading CSV data:", error);
-    return null;
+    return [];
   }
 };
 
@@ -106,8 +106,8 @@ app.post("/api/insight", async (req, res) => {
   }
 
   try {
-    // Use gemini-2.5-flash directly
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    // Use gemini-1.5-flash directly
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
     
     const requestBody = {
       contents: [
