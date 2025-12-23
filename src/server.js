@@ -156,26 +156,26 @@ app.post("/api/insight", async (req, res) => {
         {
           parts: [
             {
-              text: `You are an expert in Hindu philosophy and Sanskrit literature. Explain this verse from ${post.source || 'ancient Hindu scripture'} in a clear, understandable, and engaging way.
+              text: `Explain this verse from ${post.source || 'ancient Hindu scripture'} in clear, simple language that anyone can understand.
 
 Sanskrit Verse: ${post.sanskrit}
 English Translation: ${post.translation}
-Context: ${post.explanation || 'This verse contains profound wisdom'}
+What it teaches: ${post.explanation || 'This verse contains important wisdom'}
 
-Please provide a thoughtful explanation that:
-1. Breaks down the meaning in simple, modern language
-2. Explains why this teaching is relevant and valuable today
-3. Helps readers understand the deeper spiritual or philosophical insight
-4. Uses examples or analogies if helpful
-5. Is warm, accessible, and inspiring
+Provide a straightforward explanation that:
+- Explains what this verse actually means in plain English
+- Breaks down any complex concepts into simple terms
+- Shows how this teaching applies to everyday life
+- Uses concrete examples when helpful
+- Avoids flowery language or excessive formality - be direct and clear
 
-Write 2-3 paragraphs that make this ancient wisdom accessible to modern readers.`,
+Write 2-3 concise paragraphs. Focus on clarity and practical understanding, not poetic language.`,
             },
           ],
         },
       ],
       generationConfig: {
-        maxOutputTokens: 10000,
+        maxOutputTokens: 5000,
         temperature: 0.8,
       },
     };
