@@ -101,28 +101,124 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Winky Rough', serif;
   font-weight: 600;
   font-size: 1rem;
-  background-image: url('/blue-texture.jpg') !important;
   background-color: var(--sky-blue);
+  background-image: url('/blue-texture.jpg');
+  background-size: cover;
+  background-position: center;
   color: var(--black);
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
+  border: 3px solid #5ba3d4;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(91, 163, 212, 0.4), 
+              0 2px 4px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.btn-custom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
 }
 
 .btn-custom:hover {
-  transform: scale(1.05);
-  background-color: rgba(135, 206, 235, 0.2); /* Add a subtle blue tint on hover */
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(91, 163, 212, 0.6), 
+              0 4px 8px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: #4a90c2;
+  background-color: #9dd5f0;
+}
+
+.btn-custom:hover::before {
+  left: 100%;
+}
+
+.btn-custom:active {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 2px 8px rgba(91, 163, 212, 0.5), 
+              0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-custom:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-custom:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 8px rgba(91, 163, 212, 0.4), 
+              0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn-heart {
-  background: none;
-  border: none;
+  background-color: var(--sky-blue);
+  background-image: url('/blue-texture.jpg');
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #5ba3d4;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, color 0.2s ease;
+  box-shadow: 0 4px 8px rgba(91, 163, 212, 0.4), 
+              0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-heart::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .btn-heart:hover {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(91, 163, 212, 0.6), 
+              0 4px 8px rgba(0, 0, 0, 0.3);
+  border-color: #4a90c2;
+  background-color: #9dd5f0;
+}
+
+.btn-heart:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+.btn-heart:active {
+  transform: scale(1.05) rotate(-5deg);
+  box-shadow: 0 2px 8px rgba(91, 163, 212, 0.5);
+}
+
+.btn-heart i {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.btn-heart:hover i {
   transform: scale(1.2);
 }
 
