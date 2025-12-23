@@ -3,6 +3,7 @@ import WisdomCard from "./components/WisdomCard";
 import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import LikedWisdom from "./components/LikedWisdom";
 import About from "./pages/About"; // Import the About page
+import { supabase } from "./supabase";
 
 function App() {
   return (
@@ -50,8 +51,11 @@ function App() {
 
 const WisdomFeed = () => {
   const [posts, setPosts] = useState([]);
-  const [page, setPage] = useState(1);
+  const [allPosts, setAllPosts] = useState([]); // Store all posts
+  const [displayedCount, setDisplayedCount] = useState(10); // Number of posts to display
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingInsight, setLoadingInsight] = useState(null); // Track which card is loading insight
   const [likedPosts, setLikedPosts] = useState(
     JSON.parse(localStorage.getItem("likedPosts") || "[]")
   );
@@ -65,38 +69,69 @@ const WisdomFeed = () => {
     return shuffled;
   };
 
+  // Load all posts once on mount, then paginate display
   const loadPosts = async () => {
+    if (allPosts.length > 0) return; // Already loaded
+    
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`);
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
+      const response = await fetch(`${apiUrl}/api/posts`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      const shuffledData = shuffleArray(data); // Shuffle the posts
-      setPosts((prev) => [...prev, ...shuffledData]);
+      const shuffledData = shuffleArray(data);
+      setAllPosts(shuffledData);
+      setPosts(shuffledData.slice(0, displayedCount));
+      setHasMore(shuffledData.length > displayedCount);
     } catch (error) {
       console.error("Error loading posts:", error);
+      // Fallback: try direct Supabase if API fails
+      try {
+        const { data, error: supabaseError } = await supabase
+          .from("wisdom_posts")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!supabaseError && data) {
+          const shuffledData = shuffleArray(data);
+          setAllPosts(shuffledData);
+          setPosts(shuffledData.slice(0, displayedCount));
+          setHasMore(shuffledData.length > displayedCount);
+        } else {
+          console.error("Supabase error:", supabaseError);
+        }
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPosts(); // Load and shuffle posts on page load
-  }, [page]);
+    loadPosts();
+  }, []);
 
+  // Handle infinite scroll - load more posts
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-        !loading
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
+        !loading &&
+        hasMore &&
+        allPosts.length > 0
       ) {
-        const shuffledPosts = shuffleArray(posts); // Shuffle the posts again
-        setPosts((prev) => [...prev, ...shuffledPosts]); // Append shuffled posts
+        const nextCount = displayedCount + 10;
+        setDisplayedCount(nextCount);
+        setPosts(allPosts.slice(0, nextCount));
+        setHasMore(nextCount < allPosts.length);
       }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, posts]);
+  }, [loading, hasMore, displayedCount, allPosts]);
 
   const handleLike = (postId) => {
     const updatedLikes = likedPosts.includes(postId)
@@ -107,43 +142,56 @@ const WisdomFeed = () => {
   };
 
   const handleGetInsight = async (post) => {
+    setLoadingInsight(post.id); // Set loading for this specific card
     try {
-      setLoading(true); // Start loading
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/insight`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
+      const response = await fetch(`${apiUrl}/api/insight`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.candidates && data.candidates.length > 0) {
         return data.candidates[0].content.parts[0].text;
+      } else if (data.error) {
+        console.error("API Error:", data.error);
+        return `Error: ${data.error}. Please try again later.`;
       } else {
-        console.log("API Response:", data); // Debug response
+        console.log("API Response:", data);
         return "No insight generated. Please try again later.";
       }
     } catch (error) {
       console.error("Error fetching insight:", error);
-      return "Failed to get insight. Please check your network or API key.";
+      return `Failed to get insight: ${error.message}. Please check your network or API configuration.`;
     } finally {
-      setLoading(false); // End loading
+      setLoadingInsight(null); // Clear loading state
     }
   };
 
   return (
     <div className="container my-5">
       <h1 className="text-center display-3 mb-5 text-black">ॐ Indic Verses ॐ</h1>
-      {posts.map((post, index) => (
+      {posts.map((post) => (
         <WisdomCard
-          key={`${post.id}-${index}`} // Combine post.id and index for uniqueness
+          key={post.id}
           post={post}
           onLike={handleLike}
           isLiked={likedPosts.includes(post.id)}
           onGetInsight={handleGetInsight}
-          loading={loading}
+          loading={loadingInsight === post.id}
         />
       ))}
-      {loading && <p className="text-center font-lora lead">Loading...</p>}
+      {loading && posts.length === 0 && (
+        <p className="text-center font-lora lead">Loading wisdom...</p>
+      )}
+      {!hasMore && posts.length > 0 && (
+        <p className="text-center font-lora lead text-muted">You've seen all the wisdom!</p>
+      )}
     </div>
   );
 };

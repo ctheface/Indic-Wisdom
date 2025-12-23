@@ -11,6 +11,7 @@ const WisdomCard = ({ post, onLike, isLiked, onGetInsight, loading }) => {
 
   const getInsight = async () => {
     handleShowModal();
+    setInsight(""); // Clear previous insight
     const insightText = await onGetInsight(post); // Pass the post object
     setInsight(insightText || "No insight available.");
   };
