@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import LikedWisdom from "./components/LikedWisdom";
 import About from "./pages/About"; // Import the About page
 import { supabase } from "./supabase";
+import initialVerses from "./data/initialVerses"; // Bundled verses for instant load
 
 function App() {
   return (
@@ -50,12 +51,13 @@ function App() {
 }
 
 const WisdomFeed = () => {
-  const [posts, setPosts] = useState([]);
-  const [allPosts, setAllPosts] = useState([]); // Store all posts
-  const [displayedCount, setDisplayedCount] = useState(10); // Number of posts to display
+  // Start with bundled verses for instant display
+  const [posts, setPosts] = useState(initialVerses);
+  const [allPosts, setAllPosts] = useState(initialVerses);
+  const [displayedCount, setDisplayedCount] = useState(10);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [loadingInsight, setLoadingInsight] = useState(null); // Track which card is loading insight
+  const [loadingInsight, setLoadingInsight] = useState(null);
   const [likedPosts, setLikedPosts] = useState(
     JSON.parse(localStorage.getItem("likedPosts") || "[]")
   );
@@ -69,11 +71,10 @@ const WisdomFeed = () => {
     return shuffled;
   };
 
-  // Load all posts once on mount, then paginate display
-  const loadPosts = async () => {
-    if (allPosts.length > 0) return; // Already loaded
-    
-    setLoading(true);
+  // Load more posts from API in background
+  const loadMorePosts = async () => {
+    if (allPosts.length > initialVerses.length) return; // Already loaded from API
+
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
       const response = await fetch(`${apiUrl}/api/posts`);
@@ -81,12 +82,17 @@ const WisdomFeed = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      const shuffledData = shuffleArray(data);
-      setAllPosts(shuffledData);
-      setPosts(shuffledData.slice(0, displayedCount));
-      setHasMore(shuffledData.length > displayedCount);
+
+      // Merge API data with initial verses, removing duplicates
+      const existingIds = new Set(initialVerses.map(v => v.id));
+      const newVerses = data.filter(v => !existingIds.has(v.id));
+      const merged = [...initialVerses, ...shuffleArray(newVerses)];
+
+      setAllPosts(merged);
+      setPosts(merged.slice(0, displayedCount));
+      setHasMore(merged.length > displayedCount);
     } catch (error) {
-      console.error("Error loading posts:", error);
+      console.error("Error loading more posts:", error);
       // Fallback: try direct Supabase if API fails
       try {
         const { data, error: supabaseError } = await supabase
@@ -94,23 +100,22 @@ const WisdomFeed = () => {
           .select("*")
           .order("created_at", { ascending: false });
         if (!supabaseError && data) {
-          const shuffledData = shuffleArray(data);
-          setAllPosts(shuffledData);
-          setPosts(shuffledData.slice(0, displayedCount));
-          setHasMore(shuffledData.length > displayedCount);
-        } else {
-          console.error("Supabase error:", supabaseError);
+          const existingIds = new Set(initialVerses.map(v => v.id));
+          const newVerses = data.filter(v => !existingIds.has(v.id));
+          const merged = [...initialVerses, ...shuffleArray(newVerses)];
+          setAllPosts(merged);
+          setPosts(merged.slice(0, displayedCount));
+          setHasMore(merged.length > displayedCount);
         }
       } catch (fallbackError) {
         console.error("Fallback also failed:", fallbackError);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPosts();
+    // Load additional posts from API in background after initial render
+    loadMorePosts();
   }, []);
 
   // Handle infinite scroll - load more posts
@@ -146,9 +151,9 @@ const WisdomFeed = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://indic-wisdom-backend.onrender.com';
       const endpoint = `${apiUrl}/api/insight`;
-      
+
       console.log("Fetching insight from:", endpoint);
-      
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,7 +169,7 @@ const WisdomFeed = () => {
 
       const data = await response.json();
       console.log("API Response:", data);
-      
+
       if (data.candidates && data.candidates.length > 0) {
         return data.candidates[0].content.parts[0].text;
       } else if (data.error) {
